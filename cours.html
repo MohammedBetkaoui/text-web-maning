@@ -1,0 +1,2051 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exploration Interactive du Text Mining</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .matrix-cell {
+            transition: all 0.3s ease;
+        }
+        .matrix-cell:hover {
+            filter: brightness(0.8);
+        }
+        .highlight {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <header class="bg-blue-800 text-white p-6 shadow-lg">
+        <div class="container mx-auto">
+            <h1 class="text-3xl font-bold mb-2">Exploration Interactive du Text Mining</h1>
+            <p class="text-xl">Découvrez comment les textes sont analysés et transformés en connaissances</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6">
+        <!-- Question d'accroche -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Comment les machines comprennent-elles nos textes?</h2>
+            <p class="text-lg mb-4">
+                Chaque jour, nous générons des millions de textes sur les réseaux sociaux, emails, blogs et forums. 
+                Mais comment les machines peuvent-elles extraire du sens de ces données textuelles non structurées?
+            </p>
+            <p class="text-lg font-semibold">
+                Explorez cette simulation interactive pour découvrir les mécanismes du text mining et comprendre comment 
+                transformer des textes en connaissances exploitables.
+            </p>
+        </div>
+       
+        <!-- Navigation par onglets -->
+        <div class="mb-8">
+            <div class="flex flex-wrap border-b border-gray-200">
+                <button id="tab-preprocessing" class="tab-button px-4 py-2 text-blue-800 font-medium border-b-2 border-blue-800">
+                    Prétraitement
+                </button>
+                <button id="tab-vectorization" class="tab-button px-4 py-2 text-gray-500 font-medium">
+                    Vectorisation
+                </button>
+                <button id="tab-clustering" class="tab-button px-4 py-2 text-gray-500 font-medium">
+                    Clustering
+                </button>
+                <button id="tab-classification" class="tab-button px-4 py-2 text-gray-500 font-medium">
+                    Classification
+                </button>
+                <button id="tab-applications" class="tab-button px-4 py-2 text-gray-500 font-medium">
+                    Applications
+                </button>
+            </div>
+
+            <!-- Contenu des onglets -->
+            <div id="content-preprocessing" class="tab-content active bg-white rounded-lg shadow-md p-6 mt-4">
+                <h2 class="text-2xl font-bold text-blue-800 mb-4">Prétraitement des Textes</h2>
+                
+                <div class="mb-6">
+                    <p class="mb-4">Entrez un texte pour voir les différentes étapes de prétraitement:</p>
+                    <textarea id="input-text" class="w-full p-3 border border-gray-300 rounded-md" rows="4" placeholder="Entrez votre texte ici...">Les animaux sont des amis des humains. La machine ne l'est pas ?</textarea>
+                    <button id="process-text" class="mt-2 bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">
+                        Traiter le texte
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-bold text-lg mb-2">Tokenisation</h3>
+                        <p class="text-sm mb-2">Divise le texte en unités lexicales (mots, ponctuations)</p>
+                        <div id="tokenization-result" class="p-3 bg-white border border-gray-200 rounded-md min-h-[100px]"></div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-bold text-lg mb-2">Suppression des mots vides</h3>
+                        <p class="text-sm mb-2">Élimine les mots fréquents sans valeur sémantique</p>
+                        <div id="stopwords-result" class="p-3 bg-white border border-gray-200 rounded-md min-h-[100px]"></div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-bold text-lg mb-2">Stemming (Racinisation)</h3>
+                        <p class="text-sm mb-2">Réduit les mots à leur racine</p>
+                        <div id="stemming-result" class="p-3 bg-white border border-gray-200 rounded-md min-h-[100px]"></div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <h3 class="font-bold text-lg mb-2">Lemmatisation</h3>
+                        <p class="text-sm mb-2">Convertit les mots à leur forme canonique</p>
+                        <div id="lemmatization-result" class="p-3 bg-white border border-gray-200 rounded-md min-h-[100px]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-vectorization" class="tab-content bg-white rounded-lg shadow-md p-6 mt-4">
+                <h2 class="text-2xl font-bold text-blue-800 mb-4">Vectorisation des Textes</h2>
+                
+                <p class="mb-6">
+                    La vectorisation transforme les textes en représentations numériques que les algorithmes peuvent traiter.
+                    Explorez les différentes méthodes de vectorisation ci-dessous.
+                </p>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-3">Corpus d'exemple</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="py-2 px-4 border-b">Document</th>
+                                    <th class="py-2 px-4 border-b">Contenu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpus-table">
+                                <!-- Rempli par JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3">Matrice Termes-Documents</h3>
+                        <p class="mb-3 text-sm">Représentation de la fréquence des termes dans chaque document</p>
+                        <div class="overflow-x-auto">
+                            <table id="dtm-table" class="min-w-full bg-white border border-gray-200">
+                                <!-- Rempli par JavaScript -->
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3">Matrice TF-IDF</h3>
+                        <p class="mb-3 text-sm">Pondération qui valorise les termes rares et discriminants</p>
+                        <div class="overflow-x-auto">
+                            <table id="tfidf-table" class="min-w-full bg-white border border-gray-200">
+                                <!-- Rempli par JavaScript -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-3">Similarité entre documents</h3>
+                    <p class="mb-3">Sélectionnez deux documents pour calculer leur similarité:</p>
+                    
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Document 1</label>
+                            <select id="doc1-select" class="border border-gray-300 rounded-md p-2">
+                                <!-- Options remplies par JavaScript -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Document 2</label>
+                            <select id="doc2-select" class="border border-gray-300 rounded-md p-2">
+                                <!-- Options remplies par JavaScript -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Méthode</label>
+                            <select id="similarity-method" class="border border-gray-300 rounded-md p-2">
+                                <option value="cosine">Similarité Cosinus</option>
+                                <option value="euclidean">Distance Euclidienne</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button id="calculate-similarity" class="bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">
+                                Calculer
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="similarity-result" class="p-4 bg-gray-50 rounded-md hidden">
+                        <p class="font-medium">Résultat:</p>
+                        <p id="similarity-value" class="text-xl font-bold"></p>
+                        <div id="similarity-explanation" class="mt-2 text-sm"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">Visualisation des documents dans l'espace vectoriel</h3>
+                    <div class="chart-container">
+                        <canvas id="vector-space-chart"></canvas>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Cette visualisation montre comment les documents sont positionnés dans un espace à 2 dimensions 
+                        basé sur leurs caractéristiques textuelles. Les documents proches ont un contenu similaire.
+                    </p>
+                </div>
+            </div>
+
+            <div id="content-clustering" class="tab-content bg-white rounded-lg shadow-md p-6 mt-4">
+                <h2 class="text-2xl font-bold text-blue-800 mb-4">Clustering de Documents</h2>
+                
+                <p class="mb-6">
+                    Le clustering regroupe automatiquement les documents similaires sans connaissance préalable des catégories.
+                    Explorez comment l'algorithme K-means identifie des groupes naturels dans les données textuelles.
+                </p>
+
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Simulation K-means</h3>
+                    
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Nombre de clusters (k)</label>
+                            <select id="k-value" class="border border-gray-300 rounded-md p-2">
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button id="run-kmeans" class="bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">
+                                Exécuter K-means
+                            </button>
+                        </div>
+                        <div class="flex items-end ml-auto">
+                            <button id="kmeans-step" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition hidden">
+                                Étape suivante
+                            </button>
+                            <button id="kmeans-reset" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition ml-2 hidden">
+                                Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="kmeans-chart"></canvas>
+                    </div>
+                    
+                    <div id="kmeans-explanation" class="p-4 bg-gray-50 rounded-md mt-4 hidden">
+                        <h4 class="font-bold mb-2">Explication de l'étape actuelle:</h4>
+                        <p id="kmeans-step-description"></p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-3">Classification Hiérarchique Ascendante (CAH)</h3>
+                    
+                    <div class="flex justify-center mb-4">
+                        <div id="dendrogram-container" class="bg-white p-2 border border-gray-200 rounded-md" style="height: 400px; width: 100%;"></div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-600">
+                        Le dendrogramme ci-dessus montre comment les documents sont regroupés hiérarchiquement.
+                        Les branches qui se rejoignent plus bas indiquent une plus grande similarité entre les documents.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">Résultats du Clustering</h3>
+                    <div id="clustering-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Rempli par JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-classification" class="tab-content bg-white rounded-lg shadow-md p-6 mt-4">
+                <h2 class="text-2xl font-bold text-blue-800 mb-4">Classification de Documents</h2>
+                
+                <p class="mb-6">
+                    La classification attribue automatiquement des catégories prédéfinies aux documents en se basant sur des exemples d'apprentissage.
+                    Découvrez comment fonctionne le classifieur Naïve Bayes.
+                </p>
+
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Données d'apprentissage</h3>
+                    
+                    <div class="overflow-x-auto mb-4">
+                        <table class="min-w-full bg-white border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="py-2 px-4 border-b">Document</th>
+                                    <th class="py-2 px-4 border-b">Contenu</th>
+                                    <th class="py-2 px-4 border-b">Classe</th>
+                                </tr>
+                            </thead>
+                            <tbody id="training-data">
+                                <!-- Rempli par JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Classifieur Naïve Bayes</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                            <h4 class="font-medium mb-2">Probabilités des classes</h4>
+                            <div id="class-probabilities" class="p-3 bg-gray-50 rounded-md">
+                                <!-- Rempli par JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium mb-2">Probabilités conditionnelles des termes</h4>
+                            <div class="overflow-x-auto">
+                                <table id="term-probabilities" class="min-w-full bg-white border border-gray-200">
+                                    <!-- Rempli par JavaScript -->
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-3">Tester le classifieur</h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-1">Entrez un nouveau document à classifier:</label>
+                        <textarea id="classification-input" class="w-full p-3 border border-gray-300 rounded-md" rows="3" placeholder="Entrez votre texte ici...">La machine, une intelligence qui contrôlera l'humain.</textarea>
+                    </div>
+                    
+                    <button id="classify-document" class="bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">
+                        Classifier
+                    </button>
+                    
+                    <div id="classification-result" class="p-4 bg-gray-50 rounded-md mt-4 hidden">
+                        <h4 class="font-bold mb-2">Résultat de la classification:</h4>
+                        <p id="classification-class" class="text-xl font-bold"></p>
+                        <div id="classification-explanation" class="mt-2">
+                            <h5 class="font-medium">Calcul des probabilités:</h5>
+                            <div id="classification-probabilities" class="text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-applications" class="tab-content bg-white rounded-lg shadow-md p-6 mt-4">
+                <h2 class="text-2xl font-bold text-blue-800 mb-4">Applications du Text Mining</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3">Analyse de Sentiment</h3>
+                        <p class="mb-4">
+                            L'analyse de sentiment détermine si un texte exprime une opinion positive, négative ou neutre.
+                        </p>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-1">Entrez un texte pour analyser son sentiment:</label>
+                            <textarea id="sentiment-input" class="w-full p-3 border border-gray-300 rounded-md" rows="3" placeholder="Entrez votre texte ici...">J'adore cette nouvelle technologie, elle est vraiment incroyable et facile à utiliser.</textarea>
+                        </div>
+                        
+                        <button id="analyze-sentiment" class="bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">
+                            Analyser
+                        </button>
+                        
+                        <div id="sentiment-result" class="p-4 bg-gray-50 rounded-md mt-4 hidden">
+                            <h4 class="font-bold mb-2">Résultat de l'analyse:</h4>
+                            <div class="flex items-center">
+                                <div id="sentiment-gauge" class="w-full h-8 bg-gray-200 rounded-full overflow-hidden">
+                                    <div id="sentiment-gauge-fill" class="h-full rounded-full" style="width: 0%;"></div>
+                                </div>
+                                <span id="sentiment-score" class="ml-3 font-bold"></span>
+                            </div>
+                            <p id="sentiment-label" class="mt-2 font-medium"></p>
+                            <div id="sentiment-explanation" class="mt-2 text-sm"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3">Extraction d'Entités Nommées</h3>
+                        <p class="mb-4">
+                            L'extraction d'entités nommées identifie et classifie les éléments du texte comme des noms de personnes, 
+                            organisations, lieux, dates, etc.
+                        </p>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-1">Entrez un texte pour extraire les entités:</label>
+                            <textarea id="ner-input" class="w-full p-3 border border-gray-300 rounded-md" rows="3" placeholder="Entrez votre texte ici...">Le président Emmanuel Macron a visité Berlin le 15 mai 2023 pour rencontrer le chancelier allemand Olaf Scholz et discuter des relations franco-allemandes.</textarea>
+                        </div>
+                        
+                        <button id="extract-entities" class="bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">
+                            Extraire
+                        </button>
+                        
+                        <div id="ner-result" class="p-4 bg-gray-50 rounded-md mt-4 hidden">
+                            <h4 class="font-bold mb-2">Entités extraites:</h4>
+                            <div id="ner-entities" class="mt-2"></div>
+                            <div id="ner-explanation" class="mt-4 text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold mb-3">Autres Applications</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-gray-50 rounded-md">
+                            <h4 class="font-bold mb-2">Résumé Automatique</h4>
+                            <p class="text-sm">
+                                Génère automatiquement un résumé concis d'un texte plus long en identifiant 
+                                et en extrayant les phrases les plus importantes.
+                            </p>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-50 rounded-md">
+                            <h4 class="font-bold mb-2">Détection de Thèmes</h4>
+                            <p class="text-sm">
+                                Identifie les sujets principaux abordés dans un corpus de documents 
+                                en utilisant des techniques comme LDA (Latent Dirichlet Allocation).
+                            </p>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-50 rounded-md">
+                            <h4 class="font-bold mb-2">Systèmes de Recommandation</h4>
+                            <p class="text-sm">
+                                Suggère des contenus pertinents aux utilisateurs en fonction de l'analyse 
+                                textuelle de leurs préférences et comportements passés.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conclusion -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Ce que nous avons appris</h2>
+            <p class="mb-4">
+                Le text mining est un domaine fascinant qui permet d'extraire des connaissances précieuses à partir de données textuelles non structurées.
+                À travers cette exploration interactive, nous avons découvert:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Comment les textes sont prétraités pour faciliter leur analyse</li>
+                <li>Comment transformer des mots en vecteurs numériques</li>
+                <li>Comment regrouper automatiquement des documents similaires</li>
+                <li>Comment classifier des textes en catégories prédéfinies</li>
+                <li>Les applications pratiques du text mining dans divers domaines</li>
+            </ul>
+            <p>
+                Ces techniques sont au cœur de nombreuses technologies modernes, des moteurs de recherche aux assistants virtuels,
+                en passant par les systèmes d'analyse de l'opinion publique et les outils d'aide à la décision.
+            </p>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-6 mt-8">
+        <div class="container mx-auto text-center">
+            <p>Exploration Interactive du Text Mining - Une simulation éducative</p>
+        </div>
+    </footer>
+
+    <script>
+        // Gestion des erreurs globale
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Erreur détectée:", message, "à la ligne", lineno, "colonne", colno);
+            console.error("Détails de l'erreur:", error);
+            return true;
+        };
+
+        try {
+            // Données d'exemple
+            const corpus = [
+                { id: "doc1", text: "Les animaux sont des amis des humains. La machine ne l'est pas ?" },
+                { id: "doc2", text: "Les humains sont-ils intelligents en faisant d'une machine, une machine intelligente ?" },
+                { id: "doc3", text: "Les humains s'inspirent des animaux, sont-ils alors moins intelligents qu'eux ?" },
+                { id: "doc4", text: "Les animaux ne sont pas des humains, et ne sont pas non plus comme des machines." },
+                { id: "doc5", text: "Les animaux sont au merci des humains, mais les humains seraient au merci de la machine." }
+            ];
+
+            const trainingData = [
+                { id: "train1", text: "Les animaux sont des amis des humains. La machine ne l'est pas ?", class: "Nature" },
+                { id: "train2", text: "Les humains sont-ils intelligents en faisant d'une machine, une machine intelligente ?", class: "Technologie" },
+                { id: "train3", text: "Les humains s'inspirent des animaux, sont-ils alors moins intelligents qu'eux ?", class: "Nature" },
+                { id: "train4", text: "Les animaux ne sont pas des humains, et ne sont pas non plus comme des machines.", class: "Nature" },
+                { id: "train5", text: "Les animaux sont au merci des humains, mais les humains seraient au merci de la machine.", class: "Technologie" }
+            ];
+
+            // Mots vides français
+            const stopWords = new Set([
+                "le", "la", "les", "un", "une", "des", "du", "de", "d'", "l'", "et", "est", "sont", "a", "à", "au", "aux", 
+                "ce", "ces", "cette", "en", "il", "ils", "elle", "elles", "je", "j'", "tu", "nous", "vous", "on", "qui", "que", 
+                "quoi", "dont", "où", "quand", "comment", "pourquoi", "si", "oui", "non", "ne", "pas", "plus", "moins", "très", 
+                "alors", "donc", "car", "mais", "ou", "par", "pour", "avec", "sans", "dans", "sur", "sous", "entre", "vers", 
+                "chez", "avant", "après", "pendant", "depuis", "jusqu'à", "jusqu'au", "jusqu'aux"
+            ]);
+
+            // Fonction de stemming simplifiée pour le français
+            function simpleStemming(word) {
+                try {
+                    // Enlever les accents
+                    word = word.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    
+                    // Règles de stemming très simplifiées
+                    if (word.endsWith("s") && word.length > 2) {
+                        word = word.slice(0, -1);
+                    }
+                    if (word.endsWith("ent") && word.length > 4) {
+                        word = word.slice(0, -3);
+                    }
+                    if (word.endsWith("er") && word.length > 3) {
+                        word = word.slice(0, -2);
+                    }
+                    if (word.endsWith("e") && word.length > 2) {
+                        word = word.slice(0, -1);
+                    }
+                    
+                    return word;
+                } catch (error) {
+                    console.error("Erreur dans simpleStemming:", error);
+                    return word;
+                }
+            }
+
+            // Fonction de lemmatisation simplifiée pour le français
+            const lemmatizationMap = {
+                "animaux": "animal",
+                "sont": "être",
+                "est": "être",
+                "sera": "être",
+                "seraient": "être",
+                "amis": "ami",
+                "humains": "humain",
+                "machine": "machine",
+                "machines": "machine",
+                "intelligents": "intelligent",
+                "intelligente": "intelligent",
+                "s'inspirent": "inspirer",
+                "faisant": "faire"
+            };
+
+            function simpleLemmatization(word) {
+                try {
+                    return lemmatizationMap[word.toLowerCase()] || word;
+                } catch (error) {
+                    console.error("Erreur dans simpleLemmatization:", error);
+                    return word;
+                }
+            }
+
+            // Fonction de tokenisation
+            function tokenize(text) {
+                try {
+                    if (!text || typeof text !== 'string') {
+                        console.warn("tokenize: texte invalide", text);
+                        return [];
+                    }
+                    // Remplacer la ponctuation par des espaces et diviser par les espaces
+                    return text.toLowerCase()
+                        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ")
+                        .replace(/\s{2,}/g, " ")
+                        .trim()
+                        .split(" ");
+                } catch (error) {
+                    console.error("Erreur dans tokenize:", error);
+                    return [];
+                }
+            }
+
+            // Fonction pour supprimer les mots vides
+            function removeStopwords(tokens) {
+                try {
+                    if (!Array.isArray(tokens)) {
+                        console.warn("removeStopwords: tokens n'est pas un tableau", tokens);
+                        return [];
+                    }
+                    return tokens.filter(token => !stopWords.has(token));
+                } catch (error) {
+                    console.error("Erreur dans removeStopwords:", error);
+                    return tokens;
+                }
+            }
+
+            // Fonction pour créer la matrice termes-documents
+            function createDTM(documents) {
+                try {
+                    // Extraire tous les termes uniques
+                    const allTerms = new Set();
+                    const processedDocs = [];
+                    
+                    documents.forEach(doc => {
+                        const tokens = tokenize(doc.text);
+                        const withoutStopwords = removeStopwords(tokens);
+                        const lemmatized = withoutStopwords.map(simpleLemmatization);
+                        
+                        processedDocs.push(lemmatized);
+                        lemmatized.forEach(term => allTerms.add(term));
+                    });
+                    
+                    const terms = Array.from(allTerms);
+                    
+                    // Créer la matrice
+                    const dtm = processedDocs.map(doc => {
+                        const termFreq = {};
+                        doc.forEach(term => {
+                            termFreq[term] = (termFreq[term] || 0) + 1;
+                        });
+                        
+                        return terms.map(term => termFreq[term] || 0);
+                    });
+                    
+                    return { dtm, terms };
+                } catch (error) {
+                    console.error("Erreur dans createDTM:", error);
+                    return { dtm: [], terms: [] };
+                }
+            }
+
+            // Fonction pour calculer TF-IDF
+            function calculateTFIDF(dtm, terms) {
+                try {
+                    if (!Array.isArray(dtm) || dtm.length === 0) {
+                        console.warn("calculateTFIDF: dtm invalide", dtm);
+                        return [];
+                    }
+                    
+                    const numDocs = dtm.length;
+                    const tfidf = [];
+                    
+                    // Pour chaque terme, calculer IDF
+                    const idf = terms.map((term, termIdx) => {
+                        const docsWithTerm = dtm.filter(doc => doc[termIdx] > 0).length;
+                        return Math.log10(numDocs / (docsWithTerm || 1));
+                    });
+                    
+                    // Calculer TF-IDF pour chaque document
+                    for (let docIdx = 0; docIdx < numDocs; docIdx++) {
+                        tfidf[docIdx] = [];
+                        for (let termIdx = 0; termIdx < terms.length; termIdx++) {
+                            tfidf[docIdx][termIdx] = dtm[docIdx][termIdx] * idf[termIdx];
+                        }
+                    }
+                    
+                    return tfidf;
+                } catch (error) {
+                    console.error("Erreur dans calculateTFIDF:", error);
+                    return [];
+                }
+            }
+
+            // Fonction pour calculer la similarité cosinus
+            function cosineSimilarity(vec1, vec2) {
+                try {
+                    if (!Array.isArray(vec1) || !Array.isArray(vec2)) {
+                        console.warn("cosineSimilarity: vecteurs invalides", vec1, vec2);
+                        return 0;
+                    }
+                    
+                    let dotProduct = 0;
+                    let norm1 = 0;
+                    let norm2 = 0;
+                    
+                    for (let i = 0; i < vec1.length; i++) {
+                        dotProduct += vec1[i] * vec2[i];
+                        norm1 += vec1[i] * vec1[i];
+                        norm2 += vec2[i] * vec2[i];
+                    }
+                    
+                    norm1 = Math.sqrt(norm1);
+                    norm2 = Math.sqrt(norm2);
+                    
+                    if (norm1 === 0 || norm2 === 0) return 0;
+                    
+                    return dotProduct / (norm1 * norm2);
+                } catch (error) {
+                    console.error("Erreur dans cosineSimilarity:", error);
+                    return 0;
+                }
+            }
+
+            // Fonction pour calculer la distance euclidienne
+            function euclideanDistance(vec1, vec2) {
+                try {
+                    if (!Array.isArray(vec1) || !Array.isArray(vec2)) {
+                        console.warn("euclideanDistance: vecteurs invalides", vec1, vec2);
+                        return 0;
+                    }
+                    
+                    let sum = 0;
+                    for (let i = 0; i < vec1.length; i++) {
+                        sum += Math.pow(vec1[i] - vec2[i], 2);
+                    }
+                    
+                    return Math.sqrt(sum);
+                } catch (error) {
+                    console.error("Erreur dans euclideanDistance:", error);
+                    return 0;
+                }
+            }
+
+            // Fonction pour l'algorithme K-means
+            function kMeans(data, k, maxIterations = 10) {
+                try {
+                    if (!Array.isArray(data) || data.length === 0) {
+                        console.warn("kMeans: données invalides", data);
+                        return { centroids: [], assignments: [] };
+                    }
+                    
+                    // Initialiser les centroïdes aléatoirement
+                    const centroids = [];
+                    const usedIndices = new Set();
+                    
+                    for (let i = 0; i < k; i++) {
+                        let randomIndex;
+                        do {
+                            randomIndex = Math.floor(Math.random() * data.length);
+                        } while (usedIndices.has(randomIndex));
+                        
+                        usedIndices.add(randomIndex);
+                        centroids.push([...data[randomIndex]]);
+                    }
+                    
+                    let assignments = [];
+                    let iterations = 0;
+                    let changed = true;
+                    
+                    while (changed && iterations < maxIterations) {
+                        // Assigner chaque point au centroïde le plus proche
+                        const newAssignments = [];
+                        
+                        for (let i = 0; i < data.length; i++) {
+                            let minDistance = Infinity;
+                            let closestCentroid = 0;
+                            
+                            for (let j = 0; j < centroids.length; j++) {
+                                const distance = euclideanDistance(data[i], centroids[j]);
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    closestCentroid = j;
+                                }
+                            }
+                            
+                            newAssignments.push(closestCentroid);
+                        }
+                        
+                        // Vérifier si les assignations ont changé
+                        changed = false;
+                        if (iterations === 0 || !arraysEqual(assignments, newAssignments)) {
+                            changed = true;
+                            assignments = [...newAssignments];
+                        }
+                        
+                        // Recalculer les centroïdes
+                        const newCentroids = Array(k).fill().map(() => Array(data[0].length).fill(0));
+                        const counts = Array(k).fill(0);
+                        
+                        for (let i = 0; i < data.length; i++) {
+                            const centroidIndex = assignments[i];
+                            counts[centroidIndex]++;
+                            
+                            for (let j = 0; j < data[i].length; j++) {
+                                newCentroids[centroidIndex][j] += data[i][j];
+                            }
+                        }
+                        
+                        for (let i = 0; i < k; i++) {
+                            if (counts[i] > 0) {
+                                for (let j = 0; j < newCentroids[i].length; j++) {
+                                    newCentroids[i][j] /= counts[i];
+                                }
+                                centroids[i] = newCentroids[i];
+                            }
+                        }
+                        
+                        iterations++;
+                    }
+                    
+                    return { centroids, assignments, iterations };
+                } catch (error) {
+                    console.error("Erreur dans kMeans:", error);
+                    return { centroids: [], assignments: [], iterations: 0 };
+                }
+            }
+
+            function arraysEqual(a, b) {
+                try {
+                    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+                    for (let i = 0; i < a.length; i++) {
+                        if (a[i] !== b[i]) return false;
+                    }
+                    return true;
+                } catch (error) {
+                    console.error("Erreur dans arraysEqual:", error);
+                    return false;
+                }
+            }
+
+            // Fonction pour la classification Naïve Bayes
+            function naiveBayes(trainingData, newDocument) {
+                try {
+                    // Prétraiter les documents d'entraînement
+                    const classes = {};
+                    const classDocCounts = {};
+                    const termFrequencies = {};
+                    const vocabulary = new Set();
+                    
+                    trainingData.forEach(doc => {
+                        const docClass = doc.class;
+                        
+                        if (!classes[docClass]) {
+                            classes[docClass] = 0;
+                            classDocCounts[docClass] = 0;
+                            termFrequencies[docClass] = {};
+                        }
+                        
+                        classDocCounts[docClass]++;
+                        
+                        const tokens = tokenize(doc.text);
+                        const withoutStopwords = removeStopwords(tokens);
+                        const lemmatized = withoutStopwords.map(simpleLemmatization);
+                        
+                        lemmatized.forEach(term => {
+                            vocabulary.add(term);
+                            
+                            if (!termFrequencies[docClass][term]) {
+                                termFrequencies[docClass][term] = 0;
+                            }
+                            
+                            termFrequencies[docClass][term]++;
+                            classes[docClass]++;
+                        });
+                    });
+                    
+                    // Calculer les probabilités des classes
+                    const totalDocs = trainingData.length;
+                    const classProbabilities = {};
+                    
+                    Object.keys(classDocCounts).forEach(docClass => {
+                        classProbabilities[docClass] = classDocCounts[docClass] / totalDocs;
+                    });
+                    
+                    // Calculer les probabilités conditionnelles des termes
+                    const vocabularySize = vocabulary.size;
+                    const termProbabilities = {};
+                    
+                    Object.keys(termFrequencies).forEach(docClass => {
+                        termProbabilities[docClass] = {};
+                        
+                        vocabulary.forEach(term => {
+                            const termCount = termFrequencies[docClass][term] || 0;
+                            // Lissage de Laplace
+                            termProbabilities[docClass][term] = (termCount + 1) / (classes[docClass] + vocabularySize);
+                        });
+                    });
+                    
+                    // Classifier le nouveau document
+                    const tokens = tokenize(newDocument);
+                    const withoutStopwords = removeStopwords(tokens);
+                    const lemmatized = withoutStopwords.map(simpleLemmatization);
+                    
+                    const scores = {};
+                    
+                    Object.keys(classProbabilities).forEach(docClass => {
+                        // Commencer avec le logarithme de la probabilité de la classe
+                        scores[docClass] = Math.log(classProbabilities[docClass]);
+                        
+                        // Ajouter les logarithmes des probabilités conditionnelles
+                        lemmatized.forEach(term => {
+                            if (vocabulary.has(term)) {
+                                scores[docClass] += Math.log(termProbabilities[docClass][term]);
+                            }
+                        });
+                    });
+                    
+                    // Trouver la classe avec le score le plus élevé
+                    let bestClass = null;
+                    let bestScore = -Infinity;
+                    
+                    Object.keys(scores).forEach(docClass => {
+                        if (scores[docClass] > bestScore) {
+                            bestScore = scores[docClass];
+                            bestClass = docClass;
+                        }
+                    });
+                    
+                    return {
+                        class: bestClass,
+                        scores,
+                        classProbabilities,
+                        termProbabilities,
+                        vocabulary: Array.from(vocabulary)
+                    };
+                } catch (error) {
+                    console.error("Erreur dans naiveBayes:", error);
+                    return { class: null, scores: {}, classProbabilities: {}, termProbabilities: {}, vocabulary: [] };
+                }
+            }
+
+            // Fonction pour l'analyse de sentiment simplifiée
+            function analyzeSentiment(text) {
+                try {
+                    const positiveWords = new Set([
+                        "adore", "aime", "excellent", "incroyable", "fantastique", "super", "génial", "merveilleux", 
+                        "parfait", "facile", "agréable", "bon", "bonne", "meilleur", "positif", "heureux", "content"
+                    ]);
+                    
+                    const negativeWords = new Set([
+                        "déteste", "horrible", "terrible", "mauvais", "pire", "difficile", "compliqué", "décevant", 
+                        "déçu", "problème", "négatif", "triste", "malheureux", "médiocre", "nul"
+                    ]);
+                    
+                    const tokens = tokenize(text);
+                    const lemmatized = tokens.map(simpleLemmatization);
+                    
+                    let positiveCount = 0;
+                    let negativeCount = 0;
+                    
+                    const matchedWords = { positive: [], negative: [] };
+                    
+                    lemmatized.forEach(word => {
+                        if (positiveWords.has(word)) {
+                            positiveCount++;
+                            matchedWords.positive.push(word);
+                        } else if (negativeWords.has(word)) {
+                            negativeCount++;
+                            matchedWords.negative.push(word);
+                        }
+                    });
+                    
+                    // Calculer le score de sentiment entre -1 et 1
+                    const totalWords = tokens.length;
+                    const score = (positiveCount - negativeCount) / (totalWords || 1);
+                    
+                    let sentiment;
+                    if (score > 0.1) sentiment = "Positif";
+                    else if (score < -0.1) sentiment = "Négatif";
+                    else sentiment = "Neutre";
+                    
+                    return {
+                        score,
+                        sentiment,
+                        matchedWords
+                    };
+                } catch (error) {
+                    console.error("Erreur dans analyzeSentiment:", error);
+                    return { score: 0, sentiment: "Neutre", matchedWords: { positive: [], negative: [] } };
+                }
+            }
+
+            // Fonction pour l'extraction d'entités nommées simplifiée
+            function extractEntities(text) {
+                try {
+                    const entities = {
+                        persons: [],
+                        organizations: [],
+                        locations: [],
+                        dates: []
+                    };
+                    
+                    // Dictionnaires simplifiés
+                    const persons = new Set([
+                        "Emmanuel Macron", "Macron", "Olaf Scholz", "Scholz"
+                    ]);
+                    
+                    const organizations = new Set([
+                        "Union Européenne", "UE", "ONU", "Nations Unies", "OTAN", "NASA"
+                    ]);
+                    
+                    const locations = new Set([
+                        "France", "Paris", "Allemagne", "Berlin", "Europe"
+                    ]);
+                    
+                    // Recherche de motifs pour les dates (très simplifié)
+                    const dateRegex = /\b\d{1,2}\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\s\d{4}\b|\b\d{1,2}\/\d{1,2}\/\d{4}\b/g;
+                    
+                    // Rechercher les entités
+                    const words = text.split(/\s+/);
+                    for (let i = 0; i < words.length; i++) {
+                        // Vérifier les noms de personnes (2 mots)
+                        if (i < words.length - 1) {
+                            const potentialPerson = words[i] + " " + words[i+1];
+                            if (persons.has(potentialPerson)) {
+                                entities.persons.push(potentialPerson);
+                                i++; // Sauter le mot suivant
+                                continue;
+                            }
+                        }
+                        
+                        // Vérifier les entités d'un seul mot
+                        if (persons.has(words[i])) {
+                            entities.persons.push(words[i]);
+                        } else if (organizations.has(words[i])) {
+                            entities.organizations.push(words[i]);
+                        } else if (locations.has(words[i])) {
+                            entities.locations.push(words[i]);
+                        }
+                    }
+                    
+                    // Rechercher les dates
+                    const dates = text.match(dateRegex);
+                    if (dates) {
+                        entities.dates = dates;
+                    }
+                    
+                    return entities;
+                } catch (error) {
+                    console.error("Erreur dans extractEntities:", error);
+                    return { persons: [], organizations: [], locations: [], dates: [] };
+                }
+            }
+
+            // Gestion des onglets
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    const tabButtons = document.querySelectorAll('.tab-button');
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    
+                    tabButtons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            // Désactiver tous les onglets
+                            tabButtons.forEach(btn => {
+                                btn.classList.remove('border-blue-800', 'text-blue-800');
+                                btn.classList.add('text-gray-500');
+                            });
+                            
+                            tabContents.forEach(content => {
+                                content.classList.remove('active');
+                            });
+                            
+                            // Activer l'onglet cliqué
+                            button.classList.add('border-blue-800', 'text-blue-800');
+                            button.classList.remove('text-gray-500');
+                            
+                            const tabId = button.id.replace('tab-', 'content-');
+                            document.getElementById(tabId).classList.add('active');
+                            
+                            // Initialiser les visualisations spécifiques à l'onglet
+                            if (tabId === 'content-vectorization') {
+                                initializeVectorizationTab();
+                            } else if (tabId === 'content-clustering') {
+                                initializeClusteringTab();
+                            } else if (tabId === 'content-classification') {
+                                initializeClassificationTab();
+                            }
+                        });
+                    });
+                    
+                    // Initialiser l'onglet de prétraitement
+                    initializePreprocessingTab();
+                    
+                } catch (error) {
+                    console.error("Erreur dans l'initialisation des onglets:", error);
+                }
+            });
+
+            // Initialisation de l'onglet de prétraitement
+            function initializePreprocessingTab() {
+                try {
+                    const processButton = document.getElementById('process-text');
+                    
+                    processButton.addEventListener('click', () => {
+                        const inputText = document.getElementById('input-text').value;
+                        
+                        if (!inputText) {
+                            alert("Veuillez entrer un texte à traiter.");
+                            return;
+                        }
+                        
+                        // Tokenisation
+                        const tokens = tokenize(inputText);
+                        document.getElementById('tokenization-result').innerHTML = tokens.map(token => 
+                            `<span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded m-1">${token}</span>`
+                        ).join('');
+                        
+                        // Suppression des mots vides
+                        const withoutStopwords = removeStopwords(tokens);
+                        document.getElementById('stopwords-result').innerHTML = withoutStopwords.map(token => 
+                            `<span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded m-1">${token}</span>`
+                        ).join('');
+                        
+                        // Stemming
+                        const stemmed = withoutStopwords.map(simpleStemming);
+                        document.getElementById('stemming-result').innerHTML = stemmed.map((stem, i) => 
+                            `<span class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded m-1" title="Original: ${withoutStopwords[i]}">${stem}</span>`
+                        ).join('');
+                        
+                        // Lemmatisation
+                        const lemmatized = withoutStopwords.map(simpleLemmatization);
+                        document.getElementById('lemmatization-result').innerHTML = lemmatized.map((lemma, i) => 
+                            `<span class="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded m-1" title="Original: ${withoutStopwords[i]}">${lemma}</span>`
+                        ).join('');
+                    });
+                    
+                    // Traiter le texte par défaut
+                    processButton.click();
+                    
+                } catch (error) {
+                    console.error("Erreur dans initializePreprocessingTab:", error);
+                }
+            }
+
+            // Initialisation de l'onglet de vectorisation
+            function initializeVectorizationTab() {
+                try {
+                    // Remplir le tableau du corpus
+                    const corpusTable = document.getElementById('corpus-table');
+                    corpusTable.innerHTML = '';
+                    
+                    corpus.forEach(doc => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="py-2 px-4 border-b">${doc.id}</td>
+                            <td class="py-2 px-4 border-b">${doc.text}</td>
+                        `;
+                        corpusTable.appendChild(row);
+                    });
+                    
+                    // Créer la matrice termes-documents
+                    const { dtm, terms } = createDTM(corpus);
+                    
+                    // Remplir le tableau DTM
+                    const dtmTable = document.getElementById('dtm-table');
+                    dtmTable.innerHTML = '';
+                    
+                    // En-tête
+                    const dtmHeader = document.createElement('tr');
+                    dtmHeader.classList.add('bg-gray-100');
+                    dtmHeader.innerHTML = '<th class="py-2 px-4 border-b">Document</th>';
+                    
+                    terms.forEach(term => {
+                        dtmHeader.innerHTML += `<th class="py-2 px-4 border-b">${term}</th>`;
+                    });
+                    
+                    dtmTable.appendChild(dtmHeader);
+                    
+                    // Lignes
+                    dtm.forEach((docVector, i) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td class="py-2 px-4 border-b">${corpus[i].id}</td>`;
+                        
+                        docVector.forEach(value => {
+                            row.innerHTML += `<td class="py-2 px-4 border-b text-center">${value}</td>`;
+                        });
+                        
+                        dtmTable.appendChild(row);
+                    });
+                    
+                    // Calculer TF-IDF
+                    const tfidf = calculateTFIDF(dtm, terms);
+                    
+                    // Remplir le tableau TF-IDF
+                    const tfidfTable = document.getElementById('tfidf-table');
+                    tfidfTable.innerHTML = '';
+                    
+                    // En-tête
+                    const tfidfHeader = document.createElement('tr');
+                    tfidfHeader.classList.add('bg-gray-100');
+                    tfidfHeader.innerHTML = '<th class="py-2 px-4 border-b">Document</th>';
+                    
+                    terms.forEach(term => {
+                        tfidfHeader.innerHTML += `<th class="py-2 px-4 border-b">${term}</th>`;
+                    });
+                    
+                    tfidfTable.appendChild(tfidfHeader);
+                    
+                    // Lignes
+                    tfidf.forEach((docVector, i) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td class="py-2 px-4 border-b">${corpus[i].id}</td>`;
+                        
+                        docVector.forEach(value => {
+                            row.innerHTML += `<td class="py-2 px-4 border-b text-center">${value.toFixed(2)}</td>`;
+                        });
+                        
+                        tfidfTable.appendChild(row);
+                    });
+                    
+                    // Remplir les sélecteurs de documents
+                    const doc1Select = document.getElementById('doc1-select');
+                    const doc2Select = document.getElementById('doc2-select');
+                    
+                    doc1Select.innerHTML = '';
+                    doc2Select.innerHTML = '';
+                    
+                    corpus.forEach(doc => {
+                        doc1Select.innerHTML += `<option value="${doc.id}">${doc.id}</option>`;
+                        doc2Select.innerHTML += `<option value="${doc.id}">${doc.id}</option>`;
+                    });
+                    
+                    // Si doc2Select a au moins 2 options, sélectionner la deuxième
+                    if (doc2Select.options.length > 1) {
+                        doc2Select.selectedIndex = 1;
+                    }
+                    
+                    // Calculer la similarité
+                    document.getElementById('calculate-similarity').addEventListener('click', () => {
+                        const doc1Id = doc1Select.value;
+                        const doc2Id = doc2Select.value;
+                        const method = document.getElementById('similarity-method').value;
+                        
+                        const doc1Index = corpus.findIndex(doc => doc.id === doc1Id);
+                        const doc2Index = corpus.findIndex(doc => doc.id === doc2Id);
+                        
+                        if (doc1Index === -1 || doc2Index === -1) {
+                            alert("Documents non trouvés.");
+                            return;
+                        }
+                        
+                        let result, explanation;
+                        
+                        if (method === 'cosine') {
+                            result = cosineSimilarity(tfidf[doc1Index], tfidf[doc2Index]);
+                            explanation = `
+                                <p>La similarité cosinus mesure l'angle entre deux vecteurs dans l'espace vectoriel.</p>
+                                <p>Une valeur de 1 signifie que les documents sont identiques, 0 qu'ils sont complètement différents.</p>
+                                <p>Formule: cos(θ) = (A·B) / (||A|| × ||B||)</p>
+                            `;
+                        } else {
+                            result = euclideanDistance(tfidf[doc1Index], tfidf[doc2Index]);
+                            explanation = `
+                                <p>La distance euclidienne mesure la distance "en ligne droite" entre deux points dans l'espace vectoriel.</p>
+                                <p>Plus la valeur est petite, plus les documents sont similaires.</p>
+                                <p>Formule: d(A,B) = √(Σ(Ai - Bi)²)</p>
+                            `;
+                        }
+                        
+                        document.getElementById('similarity-result').classList.remove('hidden');
+                        document.getElementById('similarity-value').textContent = result.toFixed(4);
+                        document.getElementById('similarity-explanation').innerHTML = explanation;
+                    });
+                    
+                    // Visualisation de l'espace vectoriel
+                    visualizeVectorSpace(tfidf);
+                    
+                } catch (error) {
+                    console.error("Erreur dans initializeVectorizationTab:", error);
+                }
+            }
+
+            // Visualisation de l'espace vectoriel
+            function visualizeVectorSpace(tfidf) {
+                try {
+                    // Réduction de dimension très simplifiée (moyenne des 2 premières dimensions)
+                    const points = tfidf.map((vector, i) => {
+                        // Calculer deux dimensions représentatives (très simplifié)
+                        const x = vector.slice(0, Math.ceil(vector.length / 2)).reduce((sum, val) => sum + val, 0);
+                        const y = vector.slice(Math.ceil(vector.length / 2)).reduce((sum, val) => sum + val, 0);
+                        return { x, y, id: corpus[i].id };
+                    });
+                    
+                    // Créer le graphique
+                    const ctx = document.getElementById('vector-space-chart').getContext('2d');
+                    
+                    if (window.vectorSpaceChart) {
+                        window.vectorSpaceChart.destroy();
+                    }
+                    
+                    window.vectorSpaceChart = new Chart(ctx, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'Documents',
+                                data: points,
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                pointRadius: 8,
+                                pointHoverRadius: 10
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            aspectRatio: 1.5,
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const point = context.raw;
+                                            return `${point.id}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Dimension 1'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Dimension 2'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error("Erreur dans visualizeVectorSpace:", error);
+                }
+            }
+
+            // Initialisation de l'onglet de clustering
+            function initializeClusteringTab() {
+                try {
+                    // Créer la matrice termes-documents
+                    const { dtm, terms } = createDTM(corpus);
+                    
+                    // Calculer TF-IDF
+                    const tfidf = calculateTFIDF(dtm, terms);
+                    
+                    // Réduction de dimension pour la visualisation
+                    const points = tfidf.map((vector, i) => {
+                        const x = vector.slice(0, Math.ceil(vector.length / 2)).reduce((sum, val) => sum + val, 0);
+                        const y = vector.slice(Math.ceil(vector.length / 2)).reduce((sum, val) => sum + val, 0);
+                        return { x, y, id: corpus[i].id };
+                    });
+                    
+                    // Variables pour la simulation K-means
+                    let kmeansChart;
+                    let currentStep = 0;
+                    let kmeansState = null;
+                    let centroids = [];
+                    let assignments = [];
+                    
+                    // Fonction pour exécuter K-means
+                    document.getElementById('run-kmeans').addEventListener('click', () => {
+                        const k = parseInt(document.getElementById('k-value').value);
+                        
+                        // Préparer les données pour K-means
+                        const data = points.map(point => [point.x, point.y]);
+                        
+                        // Réinitialiser la simulation
+                        currentStep = 0;
+                        
+                        // Exécuter K-means
+                        kmeansState = simulateKMeansSteps(data, k);
+                        
+                        // Afficher les boutons de contrôle
+                        document.getElementById('kmeans-step').classList.remove('hidden');
+                        document.getElementById('kmeans-reset').classList.remove('hidden');
+                        
+                        // Afficher la première étape
+                        showKMeansStep();
+                    });
+                    
+                    // Fonction pour simuler les étapes de K-means
+                    function simulateKMeansSteps(data, k) {
+                        const steps = [];
+                        
+                        // Initialiser les centroïdes aléatoirement
+                        const usedIndices = new Set();
+                        const initialCentroids = [];
+                        
+                        for (let i = 0; i < k; i++) {
+                            let randomIndex;
+                            do {
+                                randomIndex = Math.floor(Math.random() * data.length);
+                            } while (usedIndices.has(randomIndex));
+                            
+                            usedIndices.add(randomIndex);
+                            initialCentroids.push([...data[randomIndex]]);
+                        }
+                        
+                        steps.push({
+                            centroids: initialCentroids,
+                            assignments: Array(data.length).fill(-1),
+                            description: "Initialisation des centroïdes aléatoirement."
+                        });
+                        
+                        let prevAssignments = Array(data.length).fill(-1);
+                        let iterations = 0;
+                        const maxIterations = 5;
+                        
+                        while (iterations < maxIterations) {
+                            // Assigner chaque point au centroïde le plus proche
+                            const assignments = [];
+                            
+                            for (let i = 0; i < data.length; i++) {
+                                let minDistance = Infinity;
+                                let closestCentroid = 0;
+                                
+                                for (let j = 0; j < steps[steps.length - 1].centroids.length; j++) {
+                                    const centroid = steps[steps.length - 1].centroids[j];
+                                    const distance = Math.sqrt(
+                                        Math.pow(data[i][0] - centroid[0], 2) + 
+                                        Math.pow(data[i][1] - centroid[1], 2)
+                                    );
+                                    
+                                    if (distance < minDistance) {
+                                        minDistance = distance;
+                                        closestCentroid = j;
+                                    }
+                                }
+                                
+                                assignments.push(closestCentroid);
+                            }
+                            
+                            steps.push({
+                                centroids: [...steps[steps.length - 1].centroids],
+                                assignments: [...assignments],
+                                description: `Étape ${iterations + 1}: Assignation des points aux centroïdes les plus proches.`
+                            });
+                            
+                            // Recalculer les centroïdes
+                            const newCentroids = Array(k).fill().map(() => [0, 0]);
+                            const counts = Array(k).fill(0);
+                            
+                            for (let i = 0; i < data.length; i++) {
+                                const centroidIndex = assignments[i];
+                                counts[centroidIndex]++;
+                                
+                                newCentroids[centroidIndex][0] += data[i][0];
+                                newCentroids[centroidIndex][1] += data[i][1];
+                            }
+                            
+                            for (let i = 0; i < k; i++) {
+                                if (counts[i] > 0) {
+                                    newCentroids[i][0] /= counts[i];
+                                    newCentroids[i][1] /= counts[i];
+                                }
+                            }
+                            
+                            steps.push({
+                                centroids: newCentroids,
+                                assignments: [...assignments],
+                                description: `Étape ${iterations + 1}: Recalcul des centroïdes.`
+                            });
+                            
+                            // Vérifier si les assignations ont changé
+                            let changed = false;
+                            for (let i = 0; i < assignments.length; i++) {
+                                if (assignments[i] !== prevAssignments[i]) {
+                                    changed = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!changed && iterations > 0) {
+                                steps.push({
+                                    centroids: newCentroids,
+                                    assignments: [...assignments],
+                                    description: "Convergence atteinte: les assignations ne changent plus."
+                                });
+                                break;
+                            }
+                            
+                            prevAssignments = [...assignments];
+                            iterations++;
+                        }
+                        
+                        return steps;
+                    }
+                    
+                    // Fonction pour afficher une étape de K-means
+                    function showKMeansStep() {
+                        if (!kmeansState || currentStep >= kmeansState.length) {
+                            return;
+                        }
+                        
+                        const step = kmeansState[currentStep];
+                        centroids = step.centroids;
+                        assignments = step.assignments;
+                        
+                        // Mettre à jour l'explication
+                        document.getElementById('kmeans-explanation').classList.remove('hidden');
+                        document.getElementById('kmeans-step-description').textContent = step.description;
+                        
+                        // Mettre à jour le graphique
+                        updateKMeansChart();
+                    }
+                    
+                    // Fonction pour mettre à jour le graphique K-means
+                    function updateKMeansChart() {
+                        const ctx = document.getElementById('kmeans-chart').getContext('2d');
+                        
+                        if (kmeansChart) {
+                            kmeansChart.destroy();
+                        }
+                        
+                        // Préparer les données pour le graphique
+                        const datasets = [];
+                        
+                        // Ajouter les points
+                        const clusterColors = [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)'
+                        ];
+                        
+                        // Créer un dataset pour chaque cluster
+                        const clusterData = {};
+                        
+                        points.forEach((point, i) => {
+                            const cluster = assignments[i];
+                            if (cluster === -1) return;
+                            
+                            if (!clusterData[cluster]) {
+                                clusterData[cluster] = [];
+                            }
+                            
+                            clusterData[cluster].push(point);
+                        });
+                        
+                        Object.keys(clusterData).forEach((cluster, i) => {
+                            datasets.push({
+                                label: `Cluster ${parseInt(cluster) + 1}`,
+                                data: clusterData[cluster],
+                                backgroundColor: clusterColors[i % clusterColors.length],
+                                pointRadius: 8,
+                                pointHoverRadius: 10
+                            });
+                        });
+                        
+                        // Ajouter les centroïdes
+                        datasets.push({
+                            label: 'Centroïdes',
+                            data: centroids.map((centroid, i) => ({ x: centroid[0], y: centroid[1], id: `Centroïde ${i+1}` })),
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            pointRadius: 10,
+                            pointHoverRadius: 12,
+                            pointStyle: 'triangle'
+                        });
+                        
+                        kmeansChart = new Chart(ctx, {
+                            type: 'scatter',
+                            data: {
+                                datasets: datasets
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                aspectRatio: 1.5,
+                                plugins: {
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                const point = context.raw;
+                                                return point.id;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Dimension 1'
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: 'Dimension 2'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Bouton pour passer à l'étape suivante
+                    document.getElementById('kmeans-step').addEventListener('click', () => {
+                        currentStep++;
+                        if (currentStep >= kmeansState.length) {
+                            currentStep = kmeansState.length - 1;
+                        }
+                        showKMeansStep();
+                    });
+                    
+                    // Bouton pour réinitialiser
+                    document.getElementById('kmeans-reset').addEventListener('click', () => {
+                        currentStep = 0;
+                        showKMeansStep();
+                    });
+                    
+                    // Créer le dendrogramme
+                    createDendrogram(tfidf);
+                    
+                    // Afficher les résultats du clustering
+                    const k = 2; // Nombre de clusters par défaut
+                    const data = points.map(point => [point.x, point.y]);
+                    const { assignments: clusterAssignments } = kMeans(data, k);
+                    
+                    displayClusteringResults(clusterAssignments);
+                    
+                } catch (error) {
+                    console.error("Erreur dans initializeClusteringTab:", error);
+                }
+            }
+
+            // Fonction pour créer le dendrogramme
+            function createDendrogram(tfidf) {
+                try {
+                    // Calculer les distances entre documents
+                    const distances = [];
+                    for (let i = 0; i < tfidf.length; i++) {
+                        distances[i] = [];
+                        for (let j = 0; j < tfidf.length; j++) {
+                            distances[i][j] = euclideanDistance(tfidf[i], tfidf[j]);
+                        }
+                    }
+                    
+                    // Créer un dendrogramme simplifié avec D3
+                    const width = document.getElementById('dendrogram-container').clientWidth;
+                    const height = 350;
+                    
+                    // Nettoyer le conteneur
+                    d3.select("#dendrogram-container").html("");
+                    
+                    const svg = d3.select("#dendrogram-container")
+                        .append("svg")
+                        .attr("width", width)
+                        .attr("height", height);
+                    
+                    const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+                    const innerWidth = width - margin.left - margin.right;
+                    const innerHeight = height - margin.top - margin.bottom;
+                    
+                    const g = svg.append("g")
+                        .attr("transform", `translate(${margin.left},${margin.top})`);
+                    
+                    // Créer un arbre hiérarchique simplifié
+                    // Note: Ceci est une simplification, pas un vrai algorithme CAH
+                    const nodes = corpus.map((doc, i) => ({ id: doc.id, index: i }));
+                    
+                    // Trouver les paires les plus proches
+                    const pairs = [];
+                    for (let i = 0; i < nodes.length; i++) {
+                        for (let j = i + 1; j < nodes.length; j++) {
+                            pairs.push({
+                                source: i,
+                                target: j,
+                                distance: distances[i][j]
+                            });
+                        }
+                    }
+                    
+                    // Trier par distance
+                    pairs.sort((a, b) => a.distance - b.distance);
+                    
+                    // Créer une structure d'arbre simplifiée
+                    const treeData = {
+                        name: "root",
+                        children: []
+                    };
+                    
+                    // Ajouter les nœuds feuilles
+                    nodes.forEach(node => {
+                        treeData.children.push({
+                            name: node.id,
+                            value: 1
+                        });
+                    });
+                    
+                    // Créer la hiérarchie
+                    const root = d3.hierarchy(treeData);
+                    
+                    // Créer le layout du dendrogramme
+                    const cluster = d3.cluster()
+                        .size([innerHeight, innerWidth - 100]);
+                    
+                    cluster(root);
+                    
+                    // Dessiner les liens
+                    g.selectAll(".link")
+                        .data(root.links())
+                        .enter()
+                        .append("path")
+                        .attr("class", "link")
+                        .attr("d", d => {
+                            return `M${d.source.y},${d.source.x}
+                                    L${d.source.y + (d.target.y - d.source.y) / 2},${d.source.x}
+                                    L${d.source.y + (d.target.y - d.source.y) / 2},${d.target.x}
+                                    L${d.target.y},${d.target.x}`;
+                        })
+                        .style("fill", "none")
+                        .style("stroke", "#999")
+                        .style("stroke-width", 1.5);
+                    
+                    // Dessiner les nœuds
+                    g.selectAll(".node")
+                        .data(root.descendants())
+                        .enter()
+                        .append("circle")
+                        .attr("class", "node")
+                        .attr("cx", d => d.y)
+                        .attr("cy", d => d.x)
+                        .attr("r", 4)
+                        .style("fill", d => d.children ? "#999" : "#69b3a2");
+                    
+                    // Ajouter les étiquettes
+                    g.selectAll(".label")
+                        .data(root.leaves())
+                        .enter()
+                        .append("text")
+                        .attr("class", "label")
+                        .attr("x", d => d.y + 5)
+                        .attr("y", d => d.x + 4)
+                        .text(d => d.data.name)
+                        .style("font-size", "12px")
+                        .style("font-family", "sans-serif");
+                    
+                } catch (error) {
+                    console.error("Erreur dans createDendrogram:", error);
+                }
+            }
+
+            // Fonction pour afficher les résultats du clustering
+            function displayClusteringResults(assignments) {
+                try {
+                    const container = document.getElementById('clustering-results');
+                    container.innerHTML = '';
+                    
+                    // Regrouper les documents par cluster
+                    const clusters = {};
+                    
+                    assignments.forEach((cluster, i) => {
+                        if (!clusters[cluster]) {
+                            clusters[cluster] = [];
+                        }
+                        
+                        clusters[cluster].push(corpus[i]);
+                    });
+                    
+                    // Afficher chaque cluster
+                    Object.keys(clusters).forEach(cluster => {
+                        const clusterDiv = document.createElement('div');
+                        clusterDiv.className = 'bg-gray-50 p-4 rounded-md';
+                        
+                        clusterDiv.innerHTML = `
+                            <h4 class="font-bold mb-2">Cluster ${parseInt(cluster) + 1}</h4>
+                            <ul class="list-disc pl-5">
+                                ${clusters[cluster].map(doc => `
+                                    <li class="mb-1">
+                                        <span class="font-medium">${doc.id}:</span> 
+                                        ${doc.text.length > 60 ? doc.text.substring(0, 60) + '...' : doc.text}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        `;
+                        
+                        container.appendChild(clusterDiv);
+                    });
+                    
+                } catch (error) {
+                    console.error("Erreur dans displayClusteringResults:", error);
+                }
+            }
+
+            // Initialisation de l'onglet de classification
+            function initializeClassificationTab() {
+                try {
+                    // Remplir le tableau des données d'apprentissage
+                    const trainingTable = document.getElementById('training-data');
+                    trainingTable.innerHTML = '';
+                    
+                    trainingData.forEach(doc => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="py-2 px-4 border-b">${doc.id}</td>
+                            <td class="py-2 px-4 border-b">${doc.text}</td>
+                            <td class="py-2 px-4 border-b">
+                                <span class="inline-block px-2 py-1 rounded ${doc.class === 'Nature' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                    ${doc.class}
+                                </span>
+                            </td>
+                        `;
+                        trainingTable.appendChild(row);
+                    });
+                    
+                    // Calculer les probabilités des classes
+                    const classes = {};
+                    trainingData.forEach(doc => {
+                        classes[doc.class] = (classes[doc.class] || 0) + 1;
+                    });
+                    
+                    const classProbabilities = document.getElementById('class-probabilities');
+                    classProbabilities.innerHTML = '';
+                    
+                    Object.keys(classes).forEach(className => {
+                        const probability = classes[className] / trainingData.length;
+                        classProbabilities.innerHTML += `
+                            <div class="mb-2">
+                                <span class="font-medium">P(${className}):</span> 
+                                ${probability.toFixed(2)} (${classes[className]} / ${trainingData.length})
+                            </div>
+                        `;
+                    });
+                    
+                    // Calculer les probabilités conditionnelles des termes
+                    const { dtm, terms } = createDTM(trainingData);
+                    
+                    // Compter les occurrences des termes par classe
+                    const termCounts = {};
+                    const classTermCounts = {};
+                    
+                    trainingData.forEach((doc, i) => {
+                        const docClass = doc.class;
+                        
+                        if (!classTermCounts[docClass]) {
+                            classTermCounts[docClass] = {};
+                        }
+                        
+                        terms.forEach((term, j) => {
+                            if (!termCounts[term]) {
+                                termCounts[term] = 0;
+                            }
+                            
+                            if (!classTermCounts[docClass][term]) {
+                                classTermCounts[docClass][term] = 0;
+                            }
+                            
+                            termCounts[term] += dtm[i][j];
+                            classTermCounts[docClass][term] += dtm[i][j];
+                        });
+                    });
+                    
+                    // Afficher les probabilités conditionnelles
+                    const termProbabilitiesTable = document.getElementById('term-probabilities');
+                    termProbabilitiesTable.innerHTML = '';
+                    
+                    // En-tête
+                    const header = document.createElement('tr');
+                    header.classList.add('bg-gray-100');
+                    header.innerHTML = '<th class="py-2 px-4 border-b">Terme</th>';
+                    
+                    Object.keys(classes).forEach(className => {
+                        header.innerHTML += `<th class="py-2 px-4 border-b">P(terme | ${className})</th>`;
+                    });
+                    
+                    termProbabilitiesTable.appendChild(header);
+                    
+                    // Lignes
+                    terms.forEach(term => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td class="py-2 px-4 border-b">${term}</td>`;
+                        
+                        Object.keys(classes).forEach(className => {
+                            const count = classTermCounts[className][term] || 0;
+                            const totalTerms = terms.reduce((sum, t) => sum + (classTermCounts[className][t] || 0), 0);
+                            const probability = (count + 1) / (totalTerms + terms.length); // Lissage de Laplace
+                            
+                            row.innerHTML += `<td class="py-2 px-4 border-b text-center">${probability.toFixed(3)}</td>`;
+                        });
+                        
+                        termProbabilitiesTable.appendChild(row);
+                    });
+                    
+                    // Classifier un nouveau document
+                    document.getElementById('classify-document').addEventListener('click', () => {
+                        const inputText = document.getElementById('classification-input').value;
+                        
+                        if (!inputText) {
+                            alert("Veuillez entrer un texte à classifier.");
+                            return;
+                        }
+                        
+                        const result = naiveBayes(trainingData, inputText);
+                        
+                        document.getElementById('classification-result').classList.remove('hidden');
+                        document.getElementById('classification-class').textContent = result.class;
+                        
+                        // Afficher les probabilités
+                        const probabilitiesDiv = document.getElementById('classification-probabilities');
+                        probabilitiesDiv.innerHTML = '';
+                        
+                        Object.keys(result.scores).forEach(className => {
+                            const score = result.scores[className];
+                            const isMax = className === result.class;
+                            
+                            probabilitiesDiv.innerHTML += `
+                                <div class="mb-2 ${isMax ? 'font-bold' : ''}">
+                                    <span>P(${className} | document) ∝ </span>
+                                    <span>${score.toFixed(4)}</span>
+                                    ${isMax ? ' (maximum)' : ''}
+                                </div>
+                            `;
+                        });
+                    });
+                    
+                } catch (error) {
+                    console.error("Erreur dans initializeClassificationTab:", error);
+                }
+            }
+
+            // Initialiser les fonctionnalités de l'onglet Applications
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    // Analyse de sentiment
+                    document.getElementById('analyze-sentiment').addEventListener('click', () => {
+                        const inputText = document.getElementById('sentiment-input').value;
+                        
+                        if (!inputText) {
+                            alert("Veuillez entrer un texte à analyser.");
+                            return;
+                        }
+                        
+                        const result = analyzeSentiment(inputText);
+                        
+                        document.getElementById('sentiment-result').classList.remove('hidden');
+                        
+                        // Mettre à jour la jauge
+                        const gaugeFill = document.getElementById('sentiment-gauge-fill');
+                        const normalizedScore = (result.score + 1) / 2; // Convertir de [-1,1] à [0,1]
+                        
+                        gaugeFill.style.width = `${normalizedScore * 100}%`;
+                        
+                        if (result.sentiment === "Positif") {
+                            gaugeFill.style.backgroundColor = "#34D399"; // vert
+                        } else if (result.sentiment === "Négatif") {
+                            gaugeFill.style.backgroundColor = "#F87171"; // rouge
+                        } else {
+                            gaugeFill.style.backgroundColor = "#A3A3A3"; // gris
+                        }
+                        
+                        document.getElementById('sentiment-score').textContent = result.score.toFixed(2);
+                        document.getElementById('sentiment-label').textContent = `Sentiment: ${result.sentiment}`;
+                        
+                        // Explication
+                        let explanation = "<p>Mots positifs détectés: ";
+                        if (result.matchedWords.positive.length > 0) {
+                            explanation += result.matchedWords.positive.join(", ");
+                        } else {
+                            explanation += "aucun";
+                        }
+                        explanation += "</p>";
+                        
+                        explanation += "<p>Mots négatifs détectés: ";
+                        if (result.matchedWords.negative.length > 0) {
+                            explanation += result.matchedWords.negative.join(", ");
+                        } else {
+                            explanation += "aucun";
+                        }
+                        explanation += "</p>";
+                        
+                        document.getElementById('sentiment-explanation').innerHTML = explanation;
+                    });
+                    
+                    // Extraction d'entités nommées
+                    document.getElementById('extract-entities').addEventListener('click', () => {
+                        const inputText = document.getElementById('ner-input').value;
+                        
+                        if (!inputText) {
+                            alert("Veuillez entrer un texte pour extraire les entités.");
+                            return;
+                        }
+                        
+                        const entities = extractEntities(inputText);
+                        
+                        document.getElementById('ner-result').classList.remove('hidden');
+                        
+                        // Afficher les entités
+                        const entitiesDiv = document.getElementById('ner-entities');
+                        entitiesDiv.innerHTML = '';
+                        
+                        if (entities.persons.length > 0) {
+                            entitiesDiv.innerHTML += `
+                                <div class="mb-2">
+                                    <span class="font-medium">Personnes:</span> 
+                                    ${entities.persons.map(p => `<span class="inline-block bg-red-100 text-red-800 px-2 py-1 rounded m-1">${p}</span>`).join('')}
+                                </div>
+                            `;
+                        }
+                        
+                        if (entities.organizations.length > 0) {
+                            entitiesDiv.innerHTML += `
+                                <div class="mb-2">
+                                    <span class="font-medium">Organisations:</span> 
+                                    ${entities.organizations.map(o => `<span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded m-1">${o}</span>`).join('')}
+                                </div>
+                            `;
+                        }
+                        
+                        if (entities.locations.length > 0) {
+                            entitiesDiv.innerHTML += `
+                                <div class="mb-2">
+                                    <span class="font-medium">Lieux:</span> 
+                                    ${entities.locations.map(l => `<span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded m-1">${l}</span>`).join('')}
+                                </div>
+                            `;
+                        }
+                        
+                        if (entities.dates.length > 0) {
+                            entitiesDiv.innerHTML += `
+                                <div class="mb-2">
+                                    <span class="font-medium">Dates:</span> 
+                                    ${entities.dates.map(d => `<span class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded m-1">${d}</span>`).join('')}
+                                </div>
+                            `;
+                        }
+                        
+                        if (entities.persons.length === 0 && entities.organizations.length === 0 && 
+                            entities.locations.length === 0 && entities.dates.length === 0) {
+                            entitiesDiv.innerHTML = '<p>Aucune entité nommée n\'a été détectée dans ce texte.</p>';
+                        }
+                        
+                        // Explication
+                        document.getElementById('ner-explanation').innerHTML = `
+                            <p>L'extraction d'entités nommées identifie les éléments du texte qui font référence à des personnes, 
+                            organisations, lieux, dates, etc. Cette fonctionnalité est essentielle pour l'analyse de documents, 
+                            la recherche d'information et la compréhension automatique du texte.</p>
+                        `;
+                    });
+                    
+                } catch (error) {
+                    console.error("Erreur dans l'initialisation des applications:", error);
+                }
+            });
+
+        } catch (error) {
+            console.error("Erreur globale:", error);
+        }
+    </script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>
